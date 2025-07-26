@@ -4,29 +4,29 @@
 
  The downloaded zip file from gorilla has four files. The two smaller files are the practice rounds, and the two larger files are part 1 and 2 of the task. 
 
-* You will see 4 files, 2 are short practice files and 2 larger files ![][image1]  
-*  E.g practice file ![][image2]
+* You will see 4 files, 2 are short practice files and 2 larger files ![](assests/image1.png)  
+*  E.g practice file ![](assests/image2.png)
 
 * E.g Large file 
 
-  ![][image3]
+  ![](assests/image3.png)
 
 
-* Delete the 2 short practice files and download the two larger files.![][image4]
+* Delete the 2 short practice files and download the two larger files.![](assests/image4.png)
 
 **Step 2:  Combining needed data**
 
 In the 2 large files, there is a variable called task version 
 
-* If variable “Task Version” \= 4, then it’s the first half of the task, where participants have to push the spacebar for the letter P![][image5]  
+* If variable “Task Version” \= 4, then it’s the first half of the task, where participants have to push the spacebar for the letter P![](assests/image5.png)  
 * If variable “Task Version” \= 3, then it’s the second half of the task, where participants have to push the spacebar for the letter R  
-  ![][image6]
+  ![](assests/image6.png)
 
-* Combine the two spreadsheets into one (copy and paste “Task Version”= 3 into “ Task Version” \= 4 , as they have the same exact variable titles. Name them “Subject ID” (e.g., for participant 383, name the file “383”).![][image7]
+* Combine the two spreadsheets into one (copy and paste “Task Version”= 3 into “ Task Version” \= 4 , as they have the same exact variable titles. Name them “Subject ID” (e.g., for participant 383, name the file “383”).![](assests/image7.png)
 
-![][image8]
+![](assests/image8.png)
 
-* Once combined and the file is labeled, you don’t need “Task Version \= 3” any more ![][image9]
+* Once combined and the file is labeled, you don’t need “Task Version \= 3” any more ![](assests/image9.png)
 
 
 **Step 3: Deleting columns** 
@@ -50,15 +50,15 @@ Delete all columns except:
   * This is the correct answer  
   * If Response \= Answer, then they got it correct
 
-![][image10]
+![](assests/image10.png)
 
-![][image11]
+![](assests/image11.png)
 
 * Gorilla works by having each piece of the task as a “trial”, even if it’s not part of the task. We have to filter out the trials that are just for starting or ending the tasks.
 
 **Step 4**: **Identifying discrepancies** 
 
-Under display, delete all the rows where “display” DOESN’T  \=  “P Trials” or “R Trials”. ![][image12]
+Under display, delete all the rows where “display” DOESN’T  \=  “P Trials” or “R Trials”. ![](assests/image12.png)
 
 Now that you just have just “display” \=  “P Trials” or “R Trials” we can identify certain trials with discrepancies. There are gonna be some that fall out of a specific range. We can’t just delete any trials that fall out of a specific range (e.g., too slow or too fast) because if the participant doesn’t respond, or responds late, that data is still valuable and can reflect meaningful behavior (e.g., inattention, delayed reaction).
 
