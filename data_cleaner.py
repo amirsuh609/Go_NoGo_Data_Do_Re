@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """ 
-Part 1: Preparing the dataset (Cleaning)
+Part 1: Preparing the dataset (Data Cleaning)
 Owner: Hinton Laboratory
 Version 1.0
 
 Usage:
-    python cleaning.py 
+    python data_cleaner.py 
     --input-dir raw_data/ 
     --output-dir cleaned_data/ 
     --exclude-file excluded_cleaning.txt

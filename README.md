@@ -12,7 +12,7 @@ Consolidate data from individual spreadsheets into one
 - Flag participants with >25% incorrect trials for exclusion
 - Report excluded participants
 
-### 3. Data Analysis
+### 2. Data Analysis
 - Calculate the total accuracy rate, 
 - Calculate the number of hits,  
 - Calculate the omission errors. 
@@ -23,4 +23,4 @@ Consolidate data from individual spreadsheets into one
 - Calculate the mean, median, and standard deviation of participant reaction times
 - Consolidating the data
 
-### 4. 2-in-1 Clean & Analyse Raw Data files  
+### 3. 2-in-1 Clean & Analyse Raw Data files  
