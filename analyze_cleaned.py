@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-Part 2 + 3: Calculating Variables of Interest & Consolidating
+Part 2+3: Calculates Variables of Interest & Consolidating
+Owner:    Hinton, Ph.D Laboratory
+Version:  1.0
+
 Usage:
     python analyze_cleaned.py 
     --input-dir cleaned_data/ 
     --exclude-file excluded_cleaning.txt 
     --output-file aggregated_metrics.xlsx
 """
+#Confirm and update (In/Out)put dir names
+#Del comment
+
 import os
 import glob
 import argparse
@@ -44,17 +50,30 @@ METRIC_COLS = [
 
 def compute_metrics(df):
     """
-    Given cleaned df (only P/R trials, Correct recoded),
+    Given cleaned df (incl. P/R trials, Correct recoded),
     returns a dict of all required metrics.
     """
     out = {}
-    # helper to tally counts & RT stats
-
+    # Tally counts & RT stats
+    def tally(sub, ):
+        out[f'go_nogo_accuracy_{}'] = int(sub['Correct'].sum())
+        out[f'go_nogo_hits_
+        out[f'go_nogo_omission_
+        out[f'go_nogo_comission_
+        out[f'go_nogo_trueneg_
+        out[f'go_nogo_120ms_]
+        go_rt = sub[(sub['Answer']=='Go') &
+        out[f'go_nogo_RTmean_
+        out[f'go_nogo_RTmed_
+        out[f'go_nogo_RTstdev_
+        
+////////////////////////// Break ////////////////////////////////////
+    
     # Total
     
-    # P‑only
+    # P-only
     
-    # R‑only
+    # R-only
     
     # Exclusion Criteria
     # Load exclude list
