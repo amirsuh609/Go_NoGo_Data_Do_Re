@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Part 2+3: Calculates Variables of Interest & Consolidating
+Part 2 + 3: Calculates Variables of Interest & Consolidating
 Owner:    Hinton, Ph.D Laboratory
 Version:  1.0
 
@@ -16,60 +16,77 @@ import glob
 import argparse
 import pandas as pd
 
+# List of all metrics, per total (t), P-only (p), and R-only (r)
+METRIC_COLS = [
+    'go_nogo_accuracy_t','go_nogo_hits_t','go_nogo_omission_t','go_nogo_comission_t',
+    'go_nogo_trueneg_t','go_nogo_120ms_t','go_nogo_RTmean_t','go_nogo_RTmed_t','go_nogo_RTstdev_t',
+    'go_nogo_accuracy_p','go_nogo_hits_p','go_nogo_omission_p','go_nogo_comission_p',
+    'go_nogo_trueneg_p','go_nogo_120ms_p','go_nogo_RTmean_p','go_nogo_RTmed_p','go_nogo_RTstdev_p',
+    'go_nogo_accuracy_r','go_nogo_hits_r','go_nogo_omission_r','go_nogo_comission_r',
+    'go_nogo_trueneg_r','go_nogo_120ms_r','go_nogo_RTmean_r','go_nogo_RTmed_r','go_nogo_RTstdev_r'
+]
+
 def compute_metrics(df):
     """
     Given cleaned df (incl. P/R trials, Correct recoded),
     returns a dict of all required metrics.
     """
-    return {
-        'go_nogo_accuracy_t': 0,
-        'go_nogo_hits_t': 0,
-        'go_nogo_omission_t': 0,
-        'go_nogo_comission_t': 0,
-        'go_nogo_trueneg_t': 0,
-        'go_nogo_120ms_t': 0,
-        'go_nogo_RTmean_t': None,
-        'go_nogo_RTmed_t': None,
-        'go_nogo_RTstdev_t': None,
-    }    
+    out = {}
+    def tally(sub, sfx):
+        out[f'go_nogo_accuracy_{sfx}'] = int(sub['Correct'].sum())
+        out[f'go_nogo_hits_{sfx}']     = int(sub[(sub['Answer']=='Go')   & (sub['Attempt']==1) & (sub['Correct']==1)].shape[0])
+        out[f'go_nogo_omission_{sfx}'] = int(sub[(sub['Answer']=='Go')   & (sub['Attempt'].isna()) & (sub['Correct']==0)].shape[0])
+        out[f'go_nogo_comission_{sfx}']= int(sub[(sub['Answer']=='No Go')& (sub['Attempt']==1) & (sub['Correct']==0)].shape[0])
+        out[f'go_nogo_trueneg_{sfx}']  = int(sub[(sub['Answer']=='No Go')& (sub['Attempt'].isna()) & (sub['Correct']==1)].shape[0])
+        out[f'go_nogo_120ms_{sfx}']    = int((sub['Reaction Time'] < 120).sum())
+        go_rt = sub[(sub['Answer']=='Go') & (sub['Correct']==1)]['Reaction Time'].dropna()
+        out[f'go_nogo_RTmean_{sfx}']   = go_rt.mean()
+        out[f'go_nogo_RTmed_{sfx}']    = go_rt.median()
+        out[f'go_nogo_RTstdev_{sfx}']  = go_rt.std()
+
+    if len(df) != 320:
+        print(f"⚠️ Warning: expected 320 trials but got {len(df)}")
+
+    # Total task
+    tally(df, 't')
+    # P-only trials
+    tally(df[df['display']=='P Trials'], 'p')
+    # R-only trials
+    tally(df[df['display']=='R Trials'], 'r')
+
+    return out    
         
 def main():
-    """
-    STUB: parse flags, load CSVs, apply compute_metrics, save Excel.
-    """
-    parser = argparse.ArgumentParser(description="Analyze cleaned Go/No-Go data")
-    parser.add_argument('-i','--input-dir',   required=True,
-                        help='Folder with per-subject cleaned CSVs')
-    parser.add_argument('-e','--exclude-file',required=True,
-                        help='Excluded IDs list')
-    parser.add_argument('-o','--output-file', required=True,
-                        help='Path for aggregated Excel metrics')
+    parser = argparse.ArgumentParser(
+        description="Process cleaned Go/No-Go CSVs into aggregated Excel metrics"
+    )
+    parser.add_argument('-i','--input-dir',   required=True, help='Folder of cleaned per-subject CSVs')
+    parser.add_argument('-e','--exclude-file',required=True, help='List of excluded subject IDs')
+    parser.add_argument('-o','--output-file', required=True, help='Path to save aggregated Excel')
     args = parser.parse_args()
-    
-    #Load exclusion list
+
+    # Load exclusions
     excluded = set()
     if os.path.exists(args.exclude_file):
-        with open(args.excluded_file) as f:
+        with open(args.exclude_file) as f:
             excluded = {line.strip() for line in f if line.strip()}
-    print(f"[analyze] Excluded: {sorted(excluded)}")
-    
-    #Find all clean .csv files
+    print(f"[analyze] Excluding subjects: {sorted(excluded)}")
+
+    # Collect metrics
     rows = []
-    pattern = os.path.join(args.input_dir, '*.csv')
-    for fp in sorted(glob.glob(pattern)):
+    for fp in sorted(glob.glob(os.path.join(args.input_dir, '*.csv'))):
         subj = os.path.basename(fp).split('.')[0]
         if subj in excluded:
             print(f"[analyze] Skipping excluded {subj}")
             continue
-        
         df = pd.read_csv(fp)
-        metrics = compute_metrics(df)        # stub metrics
+        metrics = compute_metrics(df)
         metrics['study_id'] = subj
         rows.append(metrics)
-    
-    #Build and write aggregated table
-    result_df = pd.DataFrame(rows)
-    result_df.to_excel(args.output_file, index=False)
+
+    # Write aggregated results
+    agg_df = pd.DataFrame(rows, columns=METRIC_COLS + ['study_id'])
+    agg_df.to_excel(args.output_file, index=False)
     print(f"✅ Saved aggregated metrics to {args.output_file}")
 
 if __name__ == "__main__":
