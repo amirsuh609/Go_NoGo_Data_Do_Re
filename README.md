@@ -24,3 +24,10 @@ Consolidate data from individual spreadsheets into one
 - Consolidating the data
 
 ### 3. 2-in-1 Clean & Analyse Raw Data files  
+
+
+Include 3 things for each participants (total trials, r, p)
+error check, flag any who has 25% incorrect, being 80
+
+
+gui only let me select files rather than whole folder
