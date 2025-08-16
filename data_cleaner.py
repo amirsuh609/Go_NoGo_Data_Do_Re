@@ -5,13 +5,18 @@ Owner: Hinton, Ph.D Laboratory
 Version 1.0
 
 Usage:
-    python data_cleaner.py \
-    --input-dir raw_data/ \
-    --output-dir cleaned_data/ \ 
-    --exclude-file excluded_cleaning.txt
+    python data_cleaner.py\
+    --input-dir ./raw_data\
+    --output-dir ./cleaned_data\
+    --exclude-file excluded_subjects.txt
+    
+    or
+    
+    python3 data_cleaner.py -i ./raw_data -o ./cleaned_data -e ./excluded_subjects.txt
 """
 
 import os
+import re
 import glob
 import argparse
 import pandas as pd
@@ -25,6 +30,16 @@ REQUIRED_COLS = [
     'display',
     'Answer'
 ]
+
+def subject_id_from_path(filepath: str) -> str:
+    """Derive subject ID from suject's folder name.
+
+    If the parent folder contains digits, return the first digit-run
+    (e.g., '17 gonogo' -> '17'); otherwise return the entire folder name.
+    """
+    parent = os.path.basename(os.path.dirname(filepath))
+    m = re.search(r'\d+', parent)
+    return m.group(0) if m else parent
 
 def clean_subject(file_paths):
     """
@@ -44,16 +59,12 @@ def clean_subject(file_paths):
             parts.append(pd.read_excel(fp, engine='openpyxl'))
     df = pd.concat(parts, ignore_index=True)
     
-    # 1a. (Debug) show columns if you need to verify
-    # print("Available columns:", df.columns.tolist())
-    
     # 2. Normalize headers and prune
-    df.columns = df.columns.str.strip()             # strip whitespace
+    df.columns = df.columns.str.strip()             
     df = df[REQUIRED_COLS].copy()                   # retain only necessary columns
     
     # 3. Filter to only P/R trials
-    df = df[df['display'].isin(['P Trials', 'R Trials'])] \
-           .reset_index(drop=True)
+    df = df[df['display'].isin(['P Trials', 'R Trials'])].reset_index(drop=True)
 
     # 4. Recode any RT <120ms as incorrect (Correct=0)
     df.loc[df['Reaction Time'] < 120, 'Correct'] = 0
@@ -65,10 +76,10 @@ def clean_subject(file_paths):
     return df, exclude_flag
     
 def main():
-    parser = argparse.ArgumentParser(description="Clean unzipped raw dataset inmport from Gorilla")
-    parser.add_argument('-i','--input-dir',   required=True, help='Raw exports folder')
-    parser.add_argument('-o','--output-dir',  required=True, help='Cleaned output folder')
-    parser.add_argument('-e','--exclude-file',required=True, help='Excluded IDs file')
+    parser = argparse.ArgumentParser(description="Clean Go/NoGo raw export: prune columns, filter P/R trials, recode fast RT's, flag exclusions.")
+    parser.add_argument('-i','--input-dir',   required=True, help='Folder of raw export containing subject folders')
+    parser.add_argument('-o','--output-dir',  required=True, help='Folder to accept cleaned output')
+    parser.add_argument('-e','--exclude-file',required=True, help='Path to write excluded subject IDs (>=80 incorrect responses)')
     args = parser.parse_args()
 
     # Ensure that output folder exists
@@ -78,24 +89,30 @@ def main():
     groups = {}
     pattern = os.path.join(args.input_dir, '**', '*.*')
     for filepath in glob.glob(pattern, recursive=True):
-        subj = os.path.basename(filepath).split('_')[0]
+        if not filepath.lower().endswith(('.csv', '.xlsx', '.xls')):
+            continue
+        subj = subject_id_from_path(filepath)
         groups.setdefault(subj, []).append(filepath)
         
     excluded = []
+    processed=0
     for subj, files in sorted(groups.items()):
         files = sorted(files, key=os.path.getsize, reverse=True)[:2]
-        # call the stub clean_subject
-        df_clean, flag = clean_subject(files)        
-
-        # write out stub CSV (will be empty)
+        try:
+            df_clean, flag = clean_subject(files)        
+        except Exception as ex:
+            print(f"[data_cleaner] ERROR processing {subj}: {ex}")
+            continue
+        
         out_path = os.path.join(args.output_dir, f"{subj}.csv")
         df_clean.to_csv(out_path, index=False)
+        processed += 1
         
         if flag:
             excluded.append(subj) 
             print(f"[data_cleaner] Flagged {subj} for exclusion (>=80 incorrect).")
             
-    # write excluded IDs (will be empty)
+    # write excluded IDs 
     with open(args.exclude_file, 'w') as fout:
         for s in excluded:
             fout.write(s + '\n')
