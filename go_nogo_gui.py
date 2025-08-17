@@ -13,7 +13,7 @@ def main():
     # 1) Select the top-level data folder of per-subject folders
     root_dir = filedialog.askdirectory(title="Select folder containing Gorilla data exports (unzipped)")
     if not root_dir:
-        messagebox.showinfo("Cancelled","No folder selected.")
+        messagebox.showinfo("Cancelled", "No folder selected.")
         return
     
     # 2) Discover spreadsheet files recursively and group by subject ID
@@ -38,12 +38,12 @@ def main():
         return
     os.makedirs(clean_dir, exist_ok=True)
     
-    # 4) Clean ea. subject
+    # 4) Clean each subject
     excluded = []
     cleaned = []
     for sid, fps in groups.items():
         if len(fps) < 2:
-            messagebox.showwarning("Skipping", f"{sid} found {len(fps)} file(s), need 2 task files.")
+            messagebox.showwarning("Skipping", f"{sid}: found {len(fps)} file(s), need 2 task files.")
             continue
         # keep the two largest files to drop practice runs
         fps = sorted(fps, key=os.path.getsize, reverse=True)[:2]    
@@ -62,7 +62,7 @@ def main():
         if flag:
             excluded.append(sid)
             
-    # 4) Choose destination filename for aggregated metrics (spreadsheet)
+    # 5) Choose destination filename for aggregated metrics (spreadsheet)
     agg_fp = filedialog.asksaveasfilename(
         title="Save aggregated",
         defaultextension=".xlsx",
@@ -71,7 +71,7 @@ def main():
     if not agg_fp:
         messagebox.showinfo("Cancelled","No save location.")
         return
-    # 5) Analyze clean data
+    # 6) Analyze clean data
     rows = []
     for sid, path in cleaned:
         if sid in excluded: 
@@ -86,8 +86,8 @@ def main():
         rows.append(m)
     pd.DataFrame(rows).to_excel(agg_fp, index=False)
     
-    # 6) Report status
-    messagebox.showinfo("Done", f"Excluded: {excluded}")
+    # 7) Report status
+    messagebox.showinfo("Done", f"Cleaned: {len(cleaned)}\nExcluded: {excluded}\nSaved: {agg_fp}")
     
 if __name__ == "__main__":
     main()

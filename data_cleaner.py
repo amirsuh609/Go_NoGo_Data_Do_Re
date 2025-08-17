@@ -32,7 +32,7 @@ REQUIRED_COLS = [
 ]
 
 def subject_id_from_path(filepath: str) -> str:
-    """Derive subject ID from suject's folder name.
+    """Derive subject ID from subject's folder name.
 
     If the parent folder contains digits, return the first digit-run
     (e.g., '17 gonogo' -> '17'); otherwise return the entire folder name.
@@ -61,7 +61,7 @@ def clean_subject(file_paths):
     
     # 2. Normalize headers and prune
     df.columns = df.columns.str.strip()             
-    df = df[REQUIRED_COLS].copy()                   # retain only necessary columns
+    df = df[REQUIRED_COLS].copy()                   
     
     # 3. Filter to only P/R trials
     df = df[df['display'].isin(['P Trials', 'R Trials'])].reset_index(drop=True)
@@ -76,23 +76,37 @@ def clean_subject(file_paths):
     return df, exclude_flag
     
 def main():
-    parser = argparse.ArgumentParser(description="Clean Go/NoGo raw export: prune columns, filter P/R trials, recode fast RT's, flag exclusions.")
+    parser = argparse.ArgumentParser(description="Clean Go/No-Go raw export: prune columns, filter P/R trials, recode fast RTs, flag exclusions.")
     parser.add_argument('-i','--input-dir',   required=True, help='Folder of raw export containing subject folders')
     parser.add_argument('-o','--output-dir',  required=True, help='Folder to accept cleaned output')
     parser.add_argument('-e','--exclude-file',required=True, help='Path to write excluded subject IDs (>=80 incorrect responses)')
     args = parser.parse_args()
 
-    # Ensure that output folder exists
+    # Resolve and show absolute paths
+    input_dir  = os.path.abspath(args.input_dir)
+    output_dir = os.path.abspath(args.output_dir)
+    exclude_fp = os.path.abspath(args.exclude_file)
+    print(f"[data_cleaner] Input folder = {input_dir}")
+    print(f"[data_cleaner] Output folder = {output_dir}")
+    print(f"[data_cleaner] Excluded subjects list = {exclude_fp}")
+
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # Discern and group raw files by subject ID prefix
+    # Discern and group raw files by parent folder (subject ID)
     groups = {}
-    pattern = os.path.join(args.input_dir, '**', '*.*')
+    pattern = os.path.join(input_dir, '**', '*.*')
     for filepath in glob.glob(pattern, recursive=True):
         if not filepath.lower().endswith(('.csv', '.xlsx', '.xls')):
             continue
         subj = subject_id_from_path(filepath)
         groups.setdefault(subj, []).append(filepath)
+    
+        if not groups:
+            print(f"[data_cleaner] No subject .csv/.xlsx/.xls files found.")
+            print(f"[data_cleaner] Searched recursively: {input_dir}")
+            print(f"[data_cleaner] Glob pattern: {os.path.join(input_dir, '**', '*.*')}")
+            return
+        print(f"[data_cleaner] discovered: {len(groups)} subjects")
         
     excluded = []
     processed=0
@@ -104,20 +118,28 @@ def main():
             print(f"[data_cleaner] ERROR processing {subj}: {ex}")
             continue
         
-        out_path = os.path.join(args.output_dir, f"{subj}.csv")
-        df_clean.to_csv(out_path, index=False)
+        out_path = os.path.join(output_dir, f"{subj}.csv")
+        print(f"[data_cleaner] Writing {subj} → {out_path}")
+        
+        try:
+            df_clean.to_csv(out_path, index=False)
+        except Exception as ex:
+            print(f"[data_cleaner] WRITE ERROR")
+            continue
+            
         processed += 1
         
         if flag:
             excluded.append(subj) 
-            print(f"[data_cleaner] Flagged {subj} for exclusion (>=80 incorrect).")
+            print(f"[data_cleaner] flagged {subj} for exclusion (>=80 incorrect).")
             
     # write excluded IDs 
-    with open(args.exclude_file, 'w') as fout:
+    with open(exclude_fp, 'w') as fout:
         for s in excluded:
             fout.write(s + '\n')
                 
-        print(f"✅ Cleaning completed. Exclude subjects: {excluded}")
+        n_written = len([n for n in os.listdir(output_dir) if n.lower().endswith('.csv')])
+        print(f"✅ Cleaning complete. Processed={processed}, Wrote={n_written}, Exclude={len(excluded)} → {exclude_fp}")
         
 if __name__ == "__main__":
-    main()    
+    main()     
